@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/layout::head"></head>
+<body>
+	<header th:replace="layout/layout::header"></header>
+	<div class="container-fluid">
+		<div class="card mt-3">
+			<div class="card-header bg-dark">
+				<ul class="nav nav-tabs card-header-tabs">
+					<li class="nav-item">
+						<a class="nav-link active" href="#" th:text="${titulo}"></a>
+					</li>
+				</ul>
+			</div>
+			<div class="card-body">
+				<div th:object="${cliente}" th:remove="tag">
+					<div th:if="${#fields.hasErrors('*')}" class="alert alert-warning" role="alert">Hay campos vacios o con errores.</div>
+				</div>
+				<form th:action="@{/cliente}" th:object="${cliente}" method="post" enctype="multipart/form-data">
+					<div class="form-row">
+						<div class="form-group col-2">
+							<label for="nombre" class="col-form-label">Nombre</label>
+							<div>
+								<input type="text" th:field="*{nombre}" class="form-control form-control-sm" placeholder="Nombre" th:errorclass="'form-control alert-warning'" />
+							</div>
+						</div>
+						<div class="form-group col-2">
+							<label for="apellido" class="col-form-label">Apellido</label>
+							<div>
+								<input type="text" th:field="*{apellido}" class="form-control form-control-sm" placeholder="Apellido"
+									th:errorclass="'form-control alert-warning'" />
+							</div>
+						</div>
+						<div class="form-group col-2">
+							<label for="email" class="col-form-label">Email</label>
+							<div>
+								<input type="text" th:field="*{email}" class="form-control form-control-sm" placeholder="Email" th:errorclass="'form-control alert-warning'" />
+							</div>
+						</div>
+						<div class="form-group col-2">
+							<label for="createdAt" class="col-form-label">Email</label>
+							<div>
+								<input type="date" th:field="*{createdAt}" class="form-control form-control-sm" placeholder="Created At"
+									th:errorclass="'form-control alert-warning'" />
+							</div>
+						</div>
+						<div class="form-group col-2">
+							<label for="file" class="col-form-label">Imagen</label>
+							<div>
+								<input type="file" name="file" class="form-control form-control-sm" />
+							</div>
+						</div>
+					</div>
+					<button type="submit" class="btn btn-primary">Guardar</button>
+				</form>
+			</div>
+		</div>
+	</div>
+	<footer th:replace="layout/layout::footer"></footer>
+</body>
+</html>
