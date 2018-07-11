@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -56,15 +57,15 @@ public class ClienteController {
 	@RequestMapping(value = "/cliente", method = RequestMethod.POST)
 	public String guardar(@Valid Cliente c, BindingResult result, Model model,
 			@RequestParam("file") MultipartFile imagen, RedirectAttributes flash, SessionStatus status) {
-		
+
 		String messageFlash = "";
 		String severity = "info";
-		
+
 		if (result.hasErrors()) {
 			model.addAttribute("titulo", "Clientes");
 			return "cliente";
 		}
-		
+
 		if (!imagen.isEmpty()) {
 			Path dir = Paths.get("src//main//resources//static//uploads");
 			String rootPath = dir.toFile().getAbsolutePath();
@@ -79,8 +80,9 @@ public class ClienteController {
 				messageFlash = "Ocurrió un Error";
 			}
 		}
-		
-		messageFlash = c.getId() != null ? messageFlash + "<br> Cliente editado con éxito" : messageFlash + "<br> Cliente creado con éxito";
+
+		messageFlash = c.getId() != null ? messageFlash + "<br> Cliente editado con éxito"
+				: messageFlash + "<br> Cliente creado con éxito";
 		clienteService.save(c);
 		status.isComplete();
 		flash.addFlashAttribute("message", messageFlash);
@@ -119,7 +121,7 @@ public class ClienteController {
 	}
 
 	@RequestMapping(value = "/clientes", method = RequestMethod.GET)
-	public String clientes(@RequestParam(name = "page", defaultValue = "0") int page, Model model) {
+	public String listar(@RequestParam(name = "page", defaultValue = "0") int page, Model model) {
 
 		Pageable pageRequest = PageRequest.of(page, 5);
 		Page<Cliente> clientes = clienteService.findAll(pageRequest);
@@ -129,5 +131,21 @@ public class ClienteController {
 		model.addAttribute("clientes", clientes);
 		model.addAttribute("page", pageRender);
 		return "clientes";
+	}
+
+	@GetMapping(value = "/ver/{id}")
+	public String ver(@PathVariable(value = "id") Long id, Model model, RedirectAttributes flash) {
+
+		Cliente c = clienteService.find(id);
+		if (c == null) {
+			flash.addFlashAttribute("message", "El cliente no existe en la base de datos");
+			flash.addFlashAttribute("severity", "danger");
+			return "redirect:/listar";
+		}
+
+		model.addAttribute("cliente", c);
+		model.addAttribute("titulo", "Detalle Cliente: " + c.getNombre());
+
+		return "ver";
 	}
 }
