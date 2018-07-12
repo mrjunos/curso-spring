@@ -144,7 +144,7 @@ public class ClienteController {
 		}
 
 		model.addAttribute("cliente", c);
-		model.addAttribute("titulo", "Detalle Cliente: " + c.getNombre());
+		model.addAttribute("titulo", c.getNombre() + " " + c.getApellido());
 
 		return "ver";
 	}
