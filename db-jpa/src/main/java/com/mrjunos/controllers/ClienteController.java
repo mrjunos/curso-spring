@@ -47,11 +47,6 @@ public class ClienteController {
 		return "cliente";
 	}
 
-	@RequestMapping(value = "/mdb")
-	public String mdb(Model model) {
-		return "mdb";
-	}
-
 	/* ACCESO A DATOS */
 
 	@RequestMapping(value = "/cliente", method = RequestMethod.POST)
