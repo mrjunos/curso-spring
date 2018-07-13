@@ -62,8 +62,7 @@ public class ClienteController {
 		}
 
 		if (!imagen.isEmpty()) {
-			Path dir = Paths.get("src//main//resources//static//uploads");
-			String rootPath = dir.toFile().getAbsolutePath();
+			String rootPath = "D://tmp//uploads";
 			try {
 				byte[] bytes = imagen.getBytes();
 				Path rutaCompleta = Paths.get(rootPath + "//" + imagen.getOriginalFilename());
