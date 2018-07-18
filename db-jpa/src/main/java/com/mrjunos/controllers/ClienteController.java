@@ -7,6 +7,8 @@ import java.nio.file.Paths;
 
 import javax.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,9 @@ public class ClienteController {
 
 	@Autowired
 	private IClienteService clienteService;
+	
+	private static final Logger log = LoggerFactory.getLogger(ClienteController.class);
+
 
 	/* VALIDACIONES VISTA */
 
@@ -62,13 +67,19 @@ public class ClienteController {
 		}
 
 		if (!imagen.isEmpty()) {
-			String rootPath = "D://tmp//uploads";
+			
+			String fileName = c.getId() + "_" + imagen.getOriginalFilename();
+
+			Path rootPath = Paths.get("uploads").resolve(fileName);
+			Path absolutePath = rootPath.toAbsolutePath();
+			
+			log.info("RootPath" + rootPath);
+			log.info("AbsolutePath" + absolutePath);
+
 			try {
-				byte[] bytes = imagen.getBytes();
-				Path rutaCompleta = Paths.get(rootPath + "//" + imagen.getOriginalFilename());
-				Files.write(rutaCompleta, bytes);
-				messageFlash = "Has subido correctamente: " + imagen.getOriginalFilename();
-				c.setImagen(imagen.getOriginalFilename());
+				Files.copy(imagen.getInputStream(), absolutePath);
+				messageFlash = "Has subido correctamente: " + fileName;
+				c.setImagen(fileName);
 			} catch (IOException e) {
 				e.printStackTrace();
 				messageFlash = "Ocurrió un Error";
