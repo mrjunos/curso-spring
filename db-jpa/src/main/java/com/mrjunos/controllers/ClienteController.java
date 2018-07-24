@@ -1,5 +1,6 @@
 package com.mrjunos.controllers;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -45,6 +46,8 @@ public class ClienteController {
 	private IClienteService clienteService;
 
 	private static final Logger log = LoggerFactory.getLogger(ClienteController.class);
+	
+	private static final String UPLOADS_FOLDER = "uploads";
 
 	/* VALIDACIONES VISTA */
 
@@ -58,7 +61,7 @@ public class ClienteController {
 
 	@GetMapping(value = "/uploads/{file:.+}")
 	public ResponseEntity<Resource> verImagen(@PathVariable String file) {
-		Path pathFile = Paths.get("uploads").resolve(file).toAbsolutePath();
+		Path pathFile = Paths.get(UPLOADS_FOLDER).resolve(file).toAbsolutePath();
 		log.info("pathFile: " + pathFile);
 		Resource recurso = null;
 		try {
@@ -92,9 +95,18 @@ public class ClienteController {
 
 		if (!imagen.isEmpty()) {
 
+			if (c.getId() != null && c.getId() > 0 && c.getImagen() != null && c.getImagen().length() > 0) {
+				Path rootPath = Paths.get(UPLOADS_FOLDER).resolve(c.getImagen()).toAbsolutePath();
+				File file = rootPath.toFile();
+
+				if (file.exists() && file.canRead()) {
+					file.delete();
+				}
+			}
+
 			String fileName = c.getId() + "_" + imagen.getOriginalFilename();
 
-			Path rootPath = Paths.get("uploads").resolve(fileName);
+			Path rootPath = Paths.get(UPLOADS_FOLDER).resolve(fileName);
 			Path absolutePath = rootPath.toAbsolutePath();
 
 			log.info("RootPath" + rootPath);
@@ -141,11 +153,27 @@ public class ClienteController {
 
 	@RequestMapping(value = "/cliente/eliminar/{id}")
 	public String eliminar(@PathVariable(value = "id") Long id, RedirectAttributes flash) {
+		String messageFlash = "";
+		String severity = "info";
+
 		if (id > 0) {
+			Cliente c = clienteService.find(id);
 			clienteService.remove(id);
+			flash.addFlashAttribute("message", "Eliminado con éxito");
+			flash.addFlashAttribute("severity", "success");
+
+			Path rootPath = Paths.get(UPLOADS_FOLDER).resolve(c.getImagen()).toAbsolutePath();
+			File file = rootPath.toFile();
+
+			if (file.exists() && file.canRead()) {
+				if (file.delete()) {
+					messageFlash = "Imagen eliminada con éxito!";
+				}
+			}
+
 		}
-		flash.addFlashAttribute("message", "Eliminado con éxito");
-		flash.addFlashAttribute("severity", "success");
+		flash.addFlashAttribute("message", messageFlash);
+		flash.addFlashAttribute("severity", severity);
 		return "redirect:/clientes";
 	}
 
