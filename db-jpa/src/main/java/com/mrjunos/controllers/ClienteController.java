@@ -1,19 +1,11 @@
 package com.mrjunos.controllers;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import javax.validation.Valid;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +26,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.mrjunos.models.entity.Cliente;
 import com.mrjunos.models.service.IClienteService;
+import com.mrjunos.models.service.IUploadFileService;
 import com.mrjunos.util.paginator.PageRender;
 
 @Controller
@@ -45,9 +38,8 @@ public class ClienteController {
 	@Autowired
 	private IClienteService clienteService;
 
-	private static final Logger log = LoggerFactory.getLogger(ClienteController.class);
-	
-	private static final String UPLOADS_FOLDER = "uploads";
+	@Autowired
+	private IUploadFileService uploadFileService;
 
 	/* VALIDACIONES VISTA */
 
@@ -61,16 +53,11 @@ public class ClienteController {
 
 	@GetMapping(value = "/uploads/{file:.+}")
 	public ResponseEntity<Resource> verImagen(@PathVariable String file) {
-		Path pathFile = Paths.get(UPLOADS_FOLDER).resolve(file).toAbsolutePath();
-		log.info("pathFile: " + pathFile);
+
 		Resource recurso = null;
 		try {
-			recurso = new UrlResource(pathFile.toUri());
-			if (!recurso.exists() || !recurso.isReadable()) {
-				throw new RuntimeException("Error: no se puede cargar la imagen: " + pathFile.toString());
-			}
+			recurso = uploadFileService.load(file);
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -96,30 +83,18 @@ public class ClienteController {
 		if (!imagen.isEmpty()) {
 
 			if (c.getId() != null && c.getId() > 0 && c.getImagen() != null && c.getImagen().length() > 0) {
-				Path rootPath = Paths.get(UPLOADS_FOLDER).resolve(c.getImagen()).toAbsolutePath();
-				File file = rootPath.toFile();
-
-				if (file.exists() && file.canRead()) {
-					file.delete();
-				}
+				uploadFileService.delete(c.getImagen());
 			}
 
-			String fileName = c.getId() + "_" + imagen.getOriginalFilename();
-
-			Path rootPath = Paths.get(UPLOADS_FOLDER).resolve(fileName);
-			Path absolutePath = rootPath.toAbsolutePath();
-
-			log.info("RootPath" + rootPath);
-			log.info("AbsolutePath" + absolutePath);
-
+			String fileName = null;
 			try {
-				Files.copy(imagen.getInputStream(), absolutePath);
-				messageFlash = "Has subido correctamente: " + fileName;
-				c.setImagen(fileName);
+				fileName = uploadFileService.copy(imagen, c.getId().toString());
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
-				messageFlash = "Ocurrió un Error";
 			}
+			messageFlash = "Has subido correctamente: " + fileName;
+			c.setImagen(fileName);
 		}
 
 		messageFlash = c.getId() != null ? messageFlash + "<br> Cliente editado con éxito"
@@ -162,15 +137,8 @@ public class ClienteController {
 			flash.addFlashAttribute("message", "Eliminado con éxito");
 			flash.addFlashAttribute("severity", "success");
 
-			Path rootPath = Paths.get(UPLOADS_FOLDER).resolve(c.getImagen()).toAbsolutePath();
-			File file = rootPath.toFile();
-
-			if (file.exists() && file.canRead()) {
-				if (file.delete()) {
-					messageFlash = "Imagen eliminada con éxito!";
-				}
-			}
-
+			messageFlash = uploadFileService.delete(c.getImagen()) ? "Imagen eliminada con éxito!"
+					: "No se pudo eliminar la imagen";
 		}
 		flash.addFlashAttribute("message", messageFlash);
 		flash.addFlashAttribute("severity", severity);
